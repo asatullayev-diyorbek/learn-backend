@@ -1,9 +1,9 @@
 """
 Shared Django settings for the Learn backend.
 
-Scope is intentionally narrow: this project implements ONLY Telegram-based
-authentication (the `apps.accounts` app). There is no email/password auth
-and no unrelated domain apps (courses, lessons, etc.) by design.
+Scope is intentionally narrow: Telegram-only authentication (`apps.accounts`)
+plus a course catalog with enrollment (`apps.courses`). There is no
+email/password auth, and no lessons/reviews/payments by design.
 """
 
 import os
@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "apps.accounts",
+    "apps.courses",
 ]
 
 MIDDLEWARE = [
