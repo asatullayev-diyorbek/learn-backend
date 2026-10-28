@@ -10,7 +10,7 @@ from integrations.telegram.auth import build_deep_link
 
 from . import services
 from .models import TelegramAuthChallenge
-from .serializers import LoginCodeVerifySerializer
+from .serializers import CurrentUserSerializer, LoginCodeVerifySerializer
 from .services import CHALLENGE_TTL_SECONDS
 from .throttles import TelegramChallengeThrottle, TelegramVerifyThrottle
 
@@ -100,3 +100,12 @@ class LogoutView(APIView):
     def post(self, request):
         logout(request)
         return Response({"status": "ok"})
+
+
+class CurrentUserView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return Response({"detail": "not_authenticated"}, status=401)
+        return Response(CurrentUserSerializer(request.user).data)

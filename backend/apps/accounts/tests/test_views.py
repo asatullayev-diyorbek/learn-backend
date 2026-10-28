@@ -118,3 +118,31 @@ def test_logout_clears_session(client):
     assert response.status_code == 200
     assert response.data == {"status": "ok"}
     assert "_auth_user_id" not in client.session
+
+
+def test_me_requires_authentication(client):
+    response = client.get(reverse("accounts:me"))
+    assert response.status_code == 401
+    assert response.data == {"detail": "not_authenticated"}
+
+
+def test_me_returns_current_user_after_login(client):
+    raw_code, _ = services.create_login_code(TG_ID, "diyor", "Diyorbek", "A")
+    verify_url = reverse("accounts:telegram-code-verify")
+    client.post(verify_url, {"code": raw_code}, format="json")
+
+    response = client.get(reverse("accounts:me"))
+    assert response.status_code == 200
+    assert response.data["username"] == f"tg_{TG_ID}"
+    assert response.data["first_name"] == "Diyorbek"
+    assert response.data["telegram_id"] == TG_ID
+    assert response.data["telegram_username"] == "diyor"
+
+
+def test_me_returns_401_after_logout(client):
+    raw_code, _ = services.create_login_code(TG_ID, "u", "f", "l")
+    client.post(reverse("accounts:telegram-code-verify"), {"code": raw_code}, format="json")
+    client.post(reverse("accounts:logout"))
+
+    response = client.get(reverse("accounts:me"))
+    assert response.status_code == 401

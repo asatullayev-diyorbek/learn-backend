@@ -14,4 +14,5 @@ urlpatterns = [
     ),
     path("telegram/code/verify/", views.TelegramCodeVerifyView.as_view(), name="telegram-code-verify"),
     path("logout/", views.LogoutView.as_view(), name="logout"),
+    path("me/", views.CurrentUserView.as_view(), name="me"),
 ]
