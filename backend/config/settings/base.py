@@ -105,6 +105,12 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 
+# Django's CSRF origin check is separate from CORS and defaults to empty, so
+# a cross-origin POST (e.g. the Vite dev server posting to Django) gets
+# rejected with "Origin checking failed" even though CORS allows it. Reuse
+# the same allow-list so the two never drift apart.
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+
 # --- Session / CSRF cookies ----------------------------------------------
 # Same-site deployment default. For a truly cross-origin frontend in
 # production, override SESSION_COOKIE_SAMESITE="None" + SESSION_COOKIE_SECURE
