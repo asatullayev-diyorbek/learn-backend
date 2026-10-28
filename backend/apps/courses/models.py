@@ -1,4 +1,16 @@
+from django.core.exceptions import ValidationError
 from django.db import models
+
+# "categories/" is a literal path registered above "<slug>/" in urls.py so
+# GET /api/courses/categories/ always reaches the category list — which
+# means a course slug of "categories" would be permanently unreachable by
+# its own detail URL. Block it at the model level, not just in urls.py.
+RESERVED_COURSE_SLUGS = {"categories"}
+
+
+def validate_course_slug(value):
+    if value in RESERVED_COURSE_SLUGS:
+        raise ValidationError('"%(value)s" slug band qilingan va kurslar uchun ishlatilmaydi.', params={"value": value})
 
 
 class Category(models.Model):
@@ -39,7 +51,7 @@ class Course(models.Model):
     ]
 
     title = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=220, unique=True)
+    slug = models.SlugField(max_length=220, unique=True, validators=[validate_course_slug])
     summary = models.CharField(max_length=300)  # card blurb
     description = models.TextField()  # detail page body
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="courses")

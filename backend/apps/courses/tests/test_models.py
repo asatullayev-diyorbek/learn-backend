@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import IntegrityError, transaction
 
@@ -62,6 +63,21 @@ def test_published_courses_annotations(make_course, make_user):
 
     assert services.published_courses(other).get().is_enrolled is False
     assert services.published_courses(None).get().is_enrolled is False
+
+
+def test_course_slug_cannot_be_the_reserved_categories_path(category, instructor):
+    # urls.py registers "categories/" above "<slug>/", so a course slugged
+    # "categories" would be permanently unreachable by its own detail URL.
+    course = Course(
+        title="Noto'g'ri slug",
+        slug="categories",
+        summary="x",
+        description="x",
+        category=category,
+        instructor=instructor,
+    )
+    with pytest.raises(ValidationError):
+        course.full_clean()
 
 
 def test_category_with_courses_cannot_be_deleted(category, make_course):
