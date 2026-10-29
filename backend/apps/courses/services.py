@@ -9,7 +9,7 @@ enroll endpoint.
 
 from typing import Optional
 
-from django.db.models import BooleanField, Count, Exists, OuterRef, Q, QuerySet, Value
+from django.db.models import BooleanField, Count, Exists, OuterRef, Q, QuerySet, Subquery, Value
 
 from .models import Category, Course, Enrollment
 
@@ -67,6 +67,31 @@ def filter_courses(
                 Q(title__icontains=search) | Q(summary__icontains=search)
             )
     return queryset
+
+
+def enrolled_courses(user) -> QuerySet:
+    """Published courses `user` is enrolled in, most recently enrolled first.
+
+    Deliberately filters via id__in=<subquery> rather than
+    .filter(enrollments__user=user): filtering on a relation and then
+    aggregating (Count("enrollments")) over that *same* relation reuses one
+    join, which would make enrolled_count always 1 instead of the course's
+    real total. The subquery keeps the filter and the count independent.
+    """
+    user_enrollment = Enrollment.objects.filter(user=user, course=OuterRef("pk"))
+    return (
+        Course.objects.filter(
+            is_published=True,
+            id__in=Enrollment.objects.filter(user=user).values("course_id"),
+        )
+        .select_related("category", "instructor")
+        .annotate(
+            enrolled_count=Count("enrollments"),
+            is_enrolled=Value(True, output_field=BooleanField()),
+            enrolled_at=Subquery(user_enrollment.values("enrolled_at")[:1]),
+        )
+        .order_by("-enrolled_at", "-id")
+    )
 
 
 def get_published_course(slug: str) -> Optional[Course]:

@@ -30,6 +30,10 @@ def enroll_url(slug):
     return reverse("courses:course-enroll", kwargs={"slug": slug})
 
 
+def mine_url():
+    return reverse("courses:course-mine")
+
+
 def result_slugs(response):
     return {item["slug"] for item in response.data["results"]}
 
@@ -299,3 +303,51 @@ def test_enroll_enforces_csrf_for_session_users(make_course, make_user):
     response = c.post(enroll_url(course.slug))
     assert response.status_code == 403
     assert not Enrollment.objects.exists()
+
+
+def test_mine_requires_authentication(client):
+    response = client.get(mine_url())
+    assert response.status_code == 401
+    assert response.data == {"detail": "not_authenticated"}
+
+
+def test_mine_lists_only_my_published_enrollments_most_recent_first(make_course, auth_client):
+    c, user = auth_client()
+    other_client, other_user = auth_client()
+
+    a = make_course(title="A")
+    b = make_course(title="B")
+    unpublished = make_course(title="C", is_published=False)
+    not_mine = make_course(title="D")
+
+    c.post(enroll_url(a.slug))
+    c.post(enroll_url(unpublished.slug))
+    other_client.post(enroll_url(not_mine.slug))
+    c.post(enroll_url(b.slug))  # enrolled last -> listed first
+
+    response = c.get(mine_url())
+    assert response.status_code == 200
+    titles = [item["title"] for item in response.data]
+    assert titles == ["B", "A"]
+    assert all(item["is_enrolled"] is True for item in response.data)
+    assert set(response.data[0].keys()) == CARD_KEYS | {"enrolled_at"}
+
+
+def test_mine_enrolled_count_is_global_not_just_mine(make_course, auth_client):
+    """A course's enrolled_count on /mine/ must not collapse to 1 (regression:
+    filtering and then Count()-ing the same relation in one queryset)."""
+    course = make_course()
+    c, _ = auth_client()
+    other_client, _ = auth_client()
+    c.post(enroll_url(course.slug))
+    other_client.post(enroll_url(course.slug))
+
+    response = c.get(mine_url())
+    assert response.data[0]["enrolled_count"] == 2
+
+
+def test_mine_is_empty_for_a_user_with_no_enrollments(auth_client):
+    c, _ = auth_client()
+    response = c.get(mine_url())
+    assert response.status_code == 200
+    assert response.data == []

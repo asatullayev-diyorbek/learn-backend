@@ -65,12 +65,14 @@ def test_published_courses_annotations(make_course, make_user):
     assert services.published_courses(None).get().is_enrolled is False
 
 
-def test_course_slug_cannot_be_the_reserved_categories_path(category, instructor):
-    # urls.py registers "categories/" above "<slug>/", so a course slugged
-    # "categories" would be permanently unreachable by its own detail URL.
+@pytest.mark.parametrize("reserved_slug", ["categories", "mine"])
+def test_course_slug_cannot_be_a_reserved_literal_path(category, instructor, reserved_slug):
+    # urls.py registers "categories/" and "mine/" above "<slug>/", so a
+    # course slugged either way would be permanently unreachable by its own
+    # detail URL.
     course = Course(
         title="Noto'g'ri slug",
-        slug="categories",
+        slug=reserved_slug,
         summary="x",
         description="x",
         category=category,

@@ -1,11 +1,12 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
-# "categories/" is a literal path registered above "<slug>/" in urls.py so
-# GET /api/courses/categories/ always reaches the category list — which
-# means a course slug of "categories" would be permanently unreachable by
-# its own detail URL. Block it at the model level, not just in urls.py.
-RESERVED_COURSE_SLUGS = {"categories"}
+# "categories/" and "mine/" are literal paths registered above "<slug>/" in
+# urls.py so GET /api/courses/categories/ and /api/courses/mine/ always
+# reach those views — which means a course slugged either way would be
+# permanently unreachable by its own detail URL. Block both at the model
+# level, not just in urls.py.
+RESERVED_COURSE_SLUGS = {"categories", "mine"}
 
 
 def validate_course_slug(value):

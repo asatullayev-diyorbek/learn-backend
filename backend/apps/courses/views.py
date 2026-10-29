@@ -4,7 +4,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import services
-from .serializers import CategorySerializer, CourseDetailSerializer, CourseListSerializer
+from .serializers import (
+    CategorySerializer,
+    CourseDetailSerializer,
+    CourseListSerializer,
+    CourseMineSerializer,
+)
 
 
 class CoursePagination(PageNumberPagination):
@@ -53,6 +58,22 @@ class CourseDetailView(APIView):
         if course is None:
             return _not_found()
         return Response(CourseDetailSerializer(course).data)
+
+
+class MyCoursesView(APIView):
+    """GET /api/courses/mine/ — the profile page's enrolled-courses list.
+
+    Unpaginated: a person's own enrollment count is small, and the profile
+    page has no need for page/category/level filtering.
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return _not_authenticated()
+        courses = services.enrolled_courses(request.user)
+        return Response(CourseMineSerializer(courses, many=True).data)
 
 
 class CourseEnrollView(APIView):

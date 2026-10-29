@@ -51,3 +51,12 @@ class CourseListSerializer(serializers.ModelSerializer):
 class CourseDetailSerializer(CourseListSerializer):
     class Meta(CourseListSerializer.Meta):
         fields = CourseListSerializer.Meta.fields + ["description"]
+
+
+class CourseMineSerializer(CourseListSerializer):
+    """Profile page shape: the catalog card fields plus when the user enrolled."""
+
+    enrolled_at = serializers.DateTimeField(read_only=True)
+
+    class Meta(CourseListSerializer.Meta):
+        fields = CourseListSerializer.Meta.fields + ["enrolled_at"]
