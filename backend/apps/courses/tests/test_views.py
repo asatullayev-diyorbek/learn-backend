@@ -3,7 +3,7 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
-from apps.courses.models import Category, Course, Enrollment
+from apps.courses.models import Category, Course, Enrollment, Topic
 
 pytestmark = pytest.mark.django_db
 
@@ -181,10 +181,27 @@ def test_detail_returns_card_fields_plus_description(client, make_course):
     course = make_course(slug="python-asoslari", description="To'liq tavsif")
     response = client.get(detail_url("python-asoslari"))
     assert response.status_code == 200
-    assert set(response.data.keys()) == CARD_KEYS | {"description"}
+    assert set(response.data.keys()) == CARD_KEYS | {"description", "topics"}
     assert response.data["description"] == "To'liq tavsif"
     assert response.data["id"] == course.id
     assert response.data["is_enrolled"] is False
+    assert response.data["topics"] == []
+
+
+def test_detail_includes_topics_in_order(client, make_course):
+    course = make_course()
+    Topic.objects.create(course=course, title="Ikkinchi", order=2)
+    Topic.objects.create(course=course, title="Birinchi", order=1)
+
+    response = client.get(detail_url(course.slug))
+    assert [t["title"] for t in response.data["topics"]] == ["Birinchi", "Ikkinchi"]
+    assert set(response.data["topics"][0].keys()) == {"id", "title", "order"}
+
+
+def test_list_cards_do_not_include_topics(client, make_course):
+    make_course()
+    response = client.get(LIST_URL)
+    assert set(response.data["results"][0].keys()) == CARD_KEYS
 
 
 def test_detail_missing_slug_is_404(client):

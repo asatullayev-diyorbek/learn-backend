@@ -9,7 +9,7 @@ a manual command on purpose and is NOT wired into migrations.
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from apps.courses.models import Category, Course, Instructor
+from apps.courses.models import Category, Course, Instructor, Topic
 
 CATEGORIES = [
     ("Backend", "backend"),
@@ -158,13 +158,77 @@ COURSES = [
     ),
 ]
 
+# slug -> ordered topic titles. Students will later attach video lessons
+# to these (not built yet) — for now just the admin-authored structure.
+TOPICS = {
+    "python-asoslari": [
+        "O'zgaruvchilar va ma'lumot turlari",
+        "Shart operatorlari",
+        "Sikllar",
+        "Funksiyalar",
+        "Fayllar bilan ishlash",
+    ],
+    "django-bilan-veb-dasturlash": [
+        "Loyihani sozlash va modellar",
+        "Migratsiyalar va ORM so'rovlari",
+        "View'lar va URL marshrutlash",
+        "Shablonlar va formalar",
+        "Admin panel",
+    ],
+    "rest-api-loyihalash": [
+        "Serializer'lar",
+        "Autentifikatsiya va ruxsatlar",
+        "Sahifalash va throttling",
+        "Testlar yozish",
+    ],
+    "html-va-css-asoslari": [
+        "Semantik HTML",
+        "CSS selektorlari",
+        "Flexbox",
+        "Grid va responsive dizayn",
+    ],
+    "javascript-chuqur": [
+        "Scope va closure",
+        "this va prototiplar",
+        "Promise va async/await",
+        "Event loop",
+    ],
+    "react-bilan-ilovalar": [
+        "Komponentlar va props",
+        "Hook'lar (useState, useEffect)",
+        "Marshrutlash",
+        "Server bilan ishlash",
+    ],
+    "sql-asoslari": [
+        "SELECT va WHERE",
+        "ORDER BY va GROUP BY",
+        "JOIN turlari",
+    ],
+    "postgresql-optimizatsiya": [
+        "Indeks turlari",
+        "EXPLAIN ANALYZE",
+        "Tranzaksiyalar va izolyatsiya",
+    ],
+    "flutter-boshlovchilar-uchun": [
+        "Dart asoslari",
+        "Vidjetlar",
+        "Sahifalar orasida o'tish",
+        "Formalar",
+    ],
+    "kotlin-android": [
+        "Kotlin asoslari",
+        "Jetpack Compose",
+        "ViewModel va korutinlar",
+    ],
+}
+
 
 class Command(BaseCommand):
     help = "Idempotently seed demo categories, instructors and courses for the catalog."
 
     @transaction.atomic
     def handle(self, *args, **options):
-        created = {"categories": 0, "instructors": 0, "courses": 0}
+        created = {"categories": 0, "instructors": 0, "courses": 0, "topics": 0}
 
         categories = {}
         for name, slug in CATEGORIES:
@@ -184,7 +248,7 @@ class Command(BaseCommand):
             created["instructors"] += was_created
 
         for slug, title, category_slug, instructor_name, level, summary, description in COURSES:
-            _, was_created = Course.objects.get_or_create(
+            course, was_created = Course.objects.get_or_create(
                 slug=slug,
                 defaults={
                     "title": title,
@@ -197,9 +261,17 @@ class Command(BaseCommand):
             )
             created["courses"] += was_created
 
+            for order, topic_title in enumerate(TOPICS.get(slug, [])):
+                _, topic_created = Topic.objects.get_or_create(
+                    course=course, title=topic_title, defaults={"order": order}
+                )
+                created["topics"] += topic_created
+
         self.stdout.write(
             self.style.SUCCESS(
                 "Seed complete: created {categories} categories, {instructors} instructors, "
-                "{courses} courses (existing rows left untouched).".format(**created)
+                "{courses} courses, {topics} topics (existing rows left untouched).".format(
+                    **created
+                )
             )
         )

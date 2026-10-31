@@ -1,7 +1,14 @@
 from django.contrib import admin
 from django.db.models import Count
 
-from .models import Category, Course, Enrollment, Instructor
+from .models import Category, Course, Enrollment, Instructor, Topic
+
+
+class TopicInline(admin.TabularInline):
+    model = Topic
+    extra = 1
+    fields = ("order", "title")
+    ordering = ("order", "id")
 
 
 @admin.register(Category)
@@ -34,6 +41,7 @@ class CourseAdmin(admin.ModelAdmin):
     search_fields = ("title", "slug", "summary")
     prepopulated_fields = {"slug": ("title",)}
     readonly_fields = ("created_at", "updated_at")
+    inlines = [TopicInline]
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(_enrolled_count=Count("enrollments"))

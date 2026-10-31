@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Category, Course, Instructor
+from .models import Category, Course, Instructor, Topic
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -48,9 +48,20 @@ class CourseListSerializer(serializers.ModelSerializer):
         ]
 
 
+class TopicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Topic
+        fields = ["id", "title", "order"]
+
+
 class CourseDetailSerializer(CourseListSerializer):
+    # Topic.Meta.ordering (order, id) means `topics` is already in the
+    # right order; .prefetch_related("topics") in the view keeps this to
+    # one extra query regardless of how many topics a course has.
+    topics = TopicSerializer(many=True, read_only=True)
+
     class Meta(CourseListSerializer.Meta):
-        fields = CourseListSerializer.Meta.fields + ["description"]
+        fields = CourseListSerializer.Meta.fields + ["description", "topics"]
 
 
 class CourseMineSerializer(CourseListSerializer):

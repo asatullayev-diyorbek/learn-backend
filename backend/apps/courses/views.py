@@ -54,7 +54,12 @@ class CourseDetailView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, slug):
-        course = services.published_courses(request.user).filter(slug=slug).first()
+        course = (
+            services.published_courses(request.user)
+            .prefetch_related("topics")
+            .filter(slug=slug)
+            .first()
+        )
         if course is None:
             return _not_found()
         return Response(CourseDetailSerializer(course).data)

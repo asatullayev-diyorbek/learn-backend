@@ -4,7 +4,7 @@ from django.core.management import call_command
 from django.db import IntegrityError, transaction
 
 from apps.courses import services
-from apps.courses.models import Category, Course, Enrollment, Instructor
+from apps.courses.models import Category, Course, Enrollment, Instructor, Topic
 
 pytestmark = pytest.mark.django_db
 
@@ -92,9 +92,28 @@ def test_category_with_courses_cannot_be_deleted(category, make_course):
 
 def test_seed_courses_is_idempotent():
     call_command("seed_courses")
-    counts = (Category.objects.count(), Instructor.objects.count(), Course.objects.count())
-    assert counts[0] >= 3 and counts[1] >= 3 and counts[2] >= 8
+    counts = (
+        Category.objects.count(),
+        Instructor.objects.count(),
+        Course.objects.count(),
+        Topic.objects.count(),
+    )
+    assert counts[0] >= 3 and counts[1] >= 3 and counts[2] >= 8 and counts[3] >= 20
 
     call_command("seed_courses")
-    assert (Category.objects.count(), Instructor.objects.count(), Course.objects.count()) == counts
+    assert (
+        Category.objects.count(),
+        Instructor.objects.count(),
+        Course.objects.count(),
+        Topic.objects.count(),
+    ) == counts
     assert not Course.objects.exclude(cover_image_url="").exists()
+
+
+def test_topics_are_ordered_within_a_course(make_course):
+    course = make_course()
+    Topic.objects.create(course=course, title="Ikkinchi", order=2)
+    Topic.objects.create(course=course, title="Birinchi", order=1)
+    Topic.objects.create(course=course, title="Uchinchi", order=3)
+
+    assert [t.title for t in course.topics.all()] == ["Birinchi", "Ikkinchi", "Uchinchi"]

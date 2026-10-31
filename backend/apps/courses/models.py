@@ -69,6 +69,24 @@ class Course(models.Model):
         return self.title
 
 
+class Topic(models.Model):
+    """A subject within a course that students record video lessons for.
+
+    Admin-authored structure; students attach their own video submissions
+    to one of these (video submissions are a later phase, not built yet).
+    """
+
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="topics")
+    title = models.CharField(max_length=200)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"{self.course.title} — {self.title}"
+
+
 class Enrollment(models.Model):
     """Links one user to one course; unique per (user, course)."""
 
