@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     "corsheaders",
     "apps.accounts",
     "apps.courses",
+    "apps.submissions",
+    "bot",
 ]
 
 MIDDLEWARE = [
@@ -124,3 +126,12 @@ CSRF_COOKIE_SAMESITE = "Lax"
 # --- Telegram bot ----------------------------------------------------------
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "")
+TELEGRAM_WEBHOOK_SECRET = os.environ.get("TELEGRAM_WEBHOOK_SECRET", "")
+TELEGRAM_WEBHOOK_URL = os.environ.get("TELEGRAM_WEBHOOK_URL", "")
+TELEGRAM_REVIEW_CHANNEL_ID = os.environ.get("TELEGRAM_REVIEW_CHANNEL_ID", "")
+
+# --- YouTube Integration ---------------------------------------------------
+YOUTUBE_CLIENT_SECRETS_FILE = os.environ.get("YOUTUBE_CLIENT_SECRETS_FILE", "")
+YOUTUBE_REFRESH_TOKEN = os.environ.get("YOUTUBE_REFRESH_TOKEN", "")
+YOUTUBE_DEFAULT_PRIVACY_STATUS = os.environ.get("YOUTUBE_DEFAULT_PRIVACY_STATUS", "unlisted")
+

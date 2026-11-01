@@ -14,22 +14,21 @@ import django  # noqa: E402
 # django.setup() MUST run before anything below imports Django models.
 django.setup()
 
-from aiogram import Bot, Dispatcher  # noqa: E402
+from aiogram import Bot  # noqa: E402
 from aiogram.client.default import DefaultBotProperties  # noqa: E402
 from aiogram.enums import ParseMode  # noqa: E402
 
 from bot.config import BOT_TOKEN  # noqa: E402
-from bot.handlers import login, start  # noqa: E402
+from bot.dispatcher import dispatcher  # noqa: E402
 
 
 async def _run():
-    bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    dp = Dispatcher()
-    dp.include_router(start.router)
-    dp.include_router(login.router)
+    if not BOT_TOKEN:
+        raise RuntimeError("TELEGRAM_BOT_TOKEN is not set.")
 
+    bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+    await dispatcher.start_polling(bot)
 
 
 def main():

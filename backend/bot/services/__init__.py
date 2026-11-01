@@ -10,6 +10,10 @@ issues with sqlite/postgres).
 from asgiref.sync import sync_to_async
 
 from apps.accounts import services as _services
+from apps.submissions import services as _submission_services
 
 confirm_auth_challenge = sync_to_async(_services.confirm_auth_challenge, thread_sensitive=True)
 create_login_code = sync_to_async(_services.create_login_code, thread_sensitive=True)
+create_submission_from_telegram = sync_to_async(
+    _submission_services.create_submission_from_telegram, thread_sensitive=True
+)
