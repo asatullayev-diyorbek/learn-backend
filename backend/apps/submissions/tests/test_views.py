@@ -141,3 +141,4 @@ def test_available_topics(course_and_topic):
     course_data = next(c for c in data if c["id"] == course.id)
     assert len(course_data["topics"]) >= 1
     assert course_data["topics"][0]["title"] == "O'zgaruvchilar"
+

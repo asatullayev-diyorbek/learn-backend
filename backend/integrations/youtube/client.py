@@ -158,3 +158,4 @@ class YouTubeClient:
             url, headers=self._headers(), params=params, json=payload, timeout=self._timeout
         )
         response.raise_for_status()
+

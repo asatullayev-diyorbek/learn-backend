@@ -94,3 +94,4 @@ class VideoSubmission(models.Model):
         if not self.youtube_video_id:
             return ""
         return f"https://www.youtube.com/watch?v={self.youtube_video_id}"
+

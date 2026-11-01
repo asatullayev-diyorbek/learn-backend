@@ -142,3 +142,4 @@ def test_reject_submission_triggers_notification(mock_send, test_setup):
     assert submission.rejection_reason == "Ovoz sifati past."
     assert mock_send.called
     assert "Ovoz sifati past." in mock_send.call_args[1]["text"]
+

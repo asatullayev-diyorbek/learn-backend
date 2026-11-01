@@ -71,3 +71,4 @@ def test_process_submission_youtube_upload_success(
     )
     mock_yt.upload_video.assert_called_once()
     mock_yt.add_video_to_playlist.assert_called_once_with("PL_test_123", "yt_video_999")
+

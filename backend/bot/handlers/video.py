@@ -50,3 +50,4 @@ async def handle_video_submission(message: Message):
         "Mavzuga biriktirilgach, video ko'rib chiqish navbatiga o'tadi.",
         parse_mode="HTML",
     )
+

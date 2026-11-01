@@ -39,3 +39,4 @@ def test_video_submission_creation_and_str():
     submission.youtube_video_id = "dQw4w9WgXcQ"
     submission.save()
     assert submission.youtube_url == "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+

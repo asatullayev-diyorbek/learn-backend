@@ -1,14 +1,18 @@
+from django.db.models import Count, Q
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.submissions.models import VideoSubmission
 from . import services
+from .models import Topic
 from .serializers import (
     CategorySerializer,
     CourseDetailSerializer,
     CourseListSerializer,
     CourseMineSerializer,
+    TopicDetailSerializer,
 )
 
 
@@ -63,6 +67,60 @@ class CourseDetailView(APIView):
         if course is None:
             return _not_found()
         return Response(CourseDetailSerializer(course).data)
+
+
+class TopicDetailView(APIView):
+    """GET /api/courses/<slug>/topics/<topic_id>/ — lesson detail page."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, slug, topic_id):
+        course = (
+            services.published_courses(request.user)
+            .filter(slug=slug)
+            .first()
+        )
+        if course is None:
+            return _not_found()
+
+        course_topics = list(
+            Topic.objects.filter(course=course)
+            .annotate(
+                video_count=Count(
+                    "video_submissions",
+                    filter=Q(
+                        video_submissions__status=VideoSubmission.STATUS_APPROVED,
+                        video_submissions__youtube_video_id__gt="",
+                    ),
+                )
+            )
+            .order_by("order", "id")
+        )
+
+        topic = next((t for t in course_topics if t.id == topic_id), None)
+        if topic is None:
+            return _not_found()
+
+        topic.course = course
+
+        approved_videos = list(
+            VideoSubmission.objects.filter(
+                topic=topic,
+                status=VideoSubmission.STATUS_APPROVED,
+            )
+            .exclude(youtube_video_id="")
+            .select_related("student")
+            .order_by("-reviewed_at", "-created_at")
+        )
+
+        serializer = TopicDetailSerializer(
+            topic,
+            context={
+                "course_topics": course_topics,
+                "approved_videos": approved_videos,
+            },
+        )
+        return Response(serializer.data)
 
 
 class MyCoursesView(APIView):

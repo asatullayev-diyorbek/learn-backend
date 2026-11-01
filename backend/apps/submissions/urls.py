@@ -9,3 +9,4 @@ urlpatterns = [
     path("<int:pk>/bind/", views.BindTopicView.as_view(), name="bind-topic"),
     path("available-topics/", views.AvailableTopicsView.as_view(), name="available-topics"),
 ]
+

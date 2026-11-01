@@ -65,3 +65,4 @@ def get_access_token() -> Optional[str]:
     except Exception as exc:
         logger.error("Failed to refresh Google OAuth2 access token: %s", exc)
         return None
+

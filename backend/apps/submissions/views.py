@@ -72,3 +72,4 @@ class AvailableTopicsView(APIView):
     def get(self, request):
         courses = services.get_available_course_topics()
         return Response(AvailableCourseTopicsSerializer(courses, many=True).data)
+

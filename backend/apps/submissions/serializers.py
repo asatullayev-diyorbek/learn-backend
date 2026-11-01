@@ -63,3 +63,4 @@ class AvailableCourseTopicsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ["id", "title", "slug", "topics"]
+

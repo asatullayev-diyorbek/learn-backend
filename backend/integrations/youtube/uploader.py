@@ -100,3 +100,4 @@ def process_submission_youtube_upload(submission) -> Optional[str]:
                 os.remove(local_file_path)
             except OSError:
                 pass
+

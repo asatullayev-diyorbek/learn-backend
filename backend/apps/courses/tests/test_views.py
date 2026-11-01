@@ -368,3 +368,71 @@ def test_mine_is_empty_for_a_user_with_no_enrollments(auth_client):
     response = c.get(mine_url())
     assert response.status_code == 200
     assert response.data == []
+
+
+# --------------------------------------------------------------------------
+# Topic (Lesson) Detail
+# --------------------------------------------------------------------------
+
+
+def topic_detail_url(slug, topic_id):
+    return reverse("courses:topic-detail", kwargs={"slug": slug, "topic_id": topic_id})
+
+
+def test_topic_detail_returns_curriculum_navigation_and_approved_videos(client, make_course, make_user):
+    from apps.submissions.models import VideoSubmission
+
+    course = make_course(slug="python-asoslari", title="Python asoslari")
+    t1 = Topic.objects.create(course=course, title="O'zgaruvchilar", order=1)
+    t2 = Topic.objects.create(course=course, title="Shart operatorlari", order=2)
+    t3 = Topic.objects.create(course=course, title="Sikllar", order=3)
+
+    student = make_user("ali_student")
+    student.first_name = "Ali"
+    student.telegram_username = "ali_dev"
+    student.save()
+    # Approved video on t2
+    v_approved = VideoSubmission.objects.create(
+        student=student,
+        topic=t2,
+        telegram_file_id="file_ok",
+        status=VideoSubmission.STATUS_APPROVED,
+        youtube_video_id="dQw4w9WgXcQ",
+    )
+    # Pending video on t2 (should NOT appear)
+    VideoSubmission.objects.create(
+        student=student,
+        topic=t2,
+        telegram_file_id="file_pending",
+        status=VideoSubmission.STATUS_PENDING_REVIEW,
+    )
+
+    response = client.get(topic_detail_url("python-asoslari", t2.id))
+    assert response.status_code == 200
+    data = response.data
+    assert data["id"] == t2.id
+    assert data["title"] == "Shart operatorlari"
+    assert data["order"] == 2
+    assert data["previous_topic_id"] == t1.id
+    assert data["next_topic_id"] == t3.id
+    assert data["course"]["slug"] == "python-asoslari"
+    assert len(data["topics"]) == 3
+    assert data["topics"][1]["video_count"] == 1
+    assert len(data["videos"]) == 1
+    assert data["videos"][0]["id"] == v_approved.id
+    assert data["videos"][0]["youtube_video_id"] == "dQw4w9WgXcQ"
+    assert data["videos"][0]["embed_url"] == "https://www.youtube.com/embed/dQw4w9WgXcQ"
+    assert data["videos"][0]["author"]["first_name"] == "Ali"
+
+
+def test_topic_detail_404_for_unknown_topic_or_unpublished_course(client, make_course):
+    course = make_course(slug="python-asoslari")
+    other = make_course(slug="other-course")
+    other_topic = Topic.objects.create(course=other, title="Boshqa", order=1)
+    draft = make_course(slug="draft-course", is_published=False)
+    draft_topic = Topic.objects.create(course=draft, title="Yopiq", order=1)
+
+    assert client.get(topic_detail_url(course.slug, 99999)).status_code == 404
+    assert client.get(topic_detail_url(course.slug, other_topic.id)).status_code == 404
+    assert client.get(topic_detail_url(draft.slug, draft_topic.id)).status_code == 404
+

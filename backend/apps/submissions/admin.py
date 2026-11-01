@@ -119,3 +119,4 @@ class VideoSubmissionAdmin(admin.ModelAdmin):
             f"{count} ta video rad etildi va o'quvchilarga xabar yuborildi.",
             level=messages.WARNING,
         )
+
